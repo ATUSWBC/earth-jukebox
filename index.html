@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earth Information Jukebox - NASA Space Apps</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0b0d17, #1b263b, #2c5364);
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        header {
+            margin-bottom: 15px;
+            padding: 15px;
+        }
+        h1 { color: #00ffcc; margin-bottom: 5px; }
+        p.subtitle { color: #b2bec3; font-size: 1.05em; }
+        .card {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            max-width: 650px;
+            margin: 15px auto;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        /* Visual Earth Pulse Indicator */
+        .earth-visual {
+            width: 90px;
+            height: 90px;
+            margin: 15px auto;
+            border-radius: 50%;
+            background: radial-gradient(circle, #00ffcc, #0984e3);
+            box-shadow: 0 0 20px #00ffcc;
+            transition: all 0.5s ease;
+        }
+        /* Animated Bar Chart Container */
+        .chart-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 140px;
+            margin: 25px 0 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 10px;
+        }
+        .bar-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 8%;
+        }
+        .bar {
+            width: 100%;
+            background-color: #45a29e;
+            border-radius: 4px 4px 0 0;
+            transition: all 0.4s ease;
+        }
+        .bar.active {
+            background-color: #ff4c4c;
+            box-shadow: 0 0 12px #ff4c4c;
+        }
+        .bar-label {
+            font-size: 0.7em;
+            margin-top: 6px;
+            color: #c5c6c7;
+        }
+        .data-display {
+            font-size: 1.25em;
+            margin: 15px 0;
+            color: #dfe6e9;
+            min-height: 75px;
+        }
+        .highlight { color: #00ffcc; font-weight: bold; }
+        button {
+            background-color: #00ffcc;
+            color: #0f2027;
+            padding: 12px 26px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin: 8px;
+        }
+        button:hover { background-color: #00b894; color: #fff; }
+        button.stop-btn { background-color: #d63031; color: white; }
+        button.stop-btn:hover { background-color: #b71c1c; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🌍 Earth Information Jukebox</h1>
+        <p class="subtitle">Multi-Sensory NASA Climate Visualization & Real-Time Sonification</p>
+    </header>
+
+    <div class="card">
+        <p>Experience Earth's rising global temperature anomalies through synchronized visuals and real-time audio frequencies up to 2026.</p>
+        
+        <!-- Dynamic Earth Pulse -->
+        <div class="earth-visual" id="earthPulse"></div>
+
+        <!-- Visual Bar Chart -->
+        <div class="chart-container" id="chartContainer"></div>
+
+        <!-- Live Data Readout -->
+        <div class="data-display" id="displayBox">
+            Press <strong>"Play Jukebox"</strong> to hear and see Earth's climate data.
+        </div>
+
+        <button onclick="startJukebox()">▶ Play Jukebox</button>
+        <button class="stop-btn" onclick="stopJukebox()">⏹ Stop</button>
+    </div>
+
+    <script>
+        // Updated NASA GISS Surface Temperature Anomaly Data (1980 - 2026)
+        const earthData = [
+            { year: 1980, anomaly: 0.26, note: 220, height: 25 },
+            { year: 1986, anomaly: 0.32, note: 250, height: 32 },
+            { year: 1992, anomaly: 0.41, note: 290, height: 42 },
+            { year: 1998, anomaly: 0.61, note: 340, height: 60 },
+            { year: 2004, anomaly: 0.54, note: 320, height: 55 },
+            { year: 2010, anomaly: 0.72, note: 400, height: 72 },
+            { year: 2016, anomaly: 1.01, note: 490, height: 95 },
+            { year: 2020, anomaly: 1.02, note: 510, height: 98 },
+            { year: 2023, anomaly: 1.18, note: 580, height: 110 },
+            { year: 2026, anomaly: 1.30, note: 650, height: 130 }
+        ];
+
+        // Build Visual Bars on Load
+        const chartContainer = document.getElementById('chartContainer');
+        earthData.forEach((item, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'bar-wrapper';
+            wrapper.innerHTML = `
+                <div class="bar" id="bar-${index}" style="height: ${item.height}px;"></div>
+                <span class="bar-label">${item.year}</span>
+            `;
+            chartContainer.appendChild(wrapper);
+        });
+
+        let audioCtx = null;
+        let isPlaying = false;
+        let currentIndex = 0;
+        let timer = null;
+
+        function playTone(frequency, duration) {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            osc.type = 'triangle'; 
+            osc.frequency.value = frequency;
+
+            gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function updateVisuals(index, item) {
+            document.querySelectorAll('.bar').forEach(b => b.classList.remove('active'));
+            const activeBar = document.getElementById(`bar-${index}`);
+            if (activeBar) activeBar.classList.add('active');
+
+            const pulse = document.getElementById('earthPulse');
+            const scale = 1 + (item.anomaly * 0.25);
+            pulse.style.transform = `scale(${scale})`;
+            if (item.anomaly > 0.8) {
+                pulse.style.background = 'radial-gradient(circle, #ff7675, #d63031)';
+                pulse.style.boxShadow = '0 0 25px #ff4c4c';
+            } else {
+                pulse.style.background = 'radial-gradient(circle, #00ffcc, #0984e3)';
+                pulse.style.boxShadow = '0 0 20px #00ffcc';
+            }
+        }
+
+        function startJukebox() {
+            if (isPlaying) return;
+            isPlaying = true;
+            currentIndex = 0;
+
+            const box = document.getElementById('displayBox');
+
+            const playStep = () => {
+                if (!isPlaying) return;
+                if (currentIndex >= earthData.length) {
+                    currentIndex = 0;
+                }
+
+                const item = earthData[currentIndex];
+                box.innerHTML = `Year: <span class="highlight">${item.year}</span> | 
+                                 Temp Anomaly: <span class="highlight">+${item.anomaly}°C</span><br>
+                                 <small>Audio Sonification Frequency: <strong>${item.note} Hz</strong></small>`;
+
+                updateVisuals(currentIndex, item);
+                playTone(item.note, 1.2);
+                currentIndex++;
+            };
+
+            playStep();
+            timer = setInterval(playStep, 1500);
+        }
+
+        function stopJukebox() {
+            isPlaying = false;
+            clearInterval(timer);
+            document.querySelectorAll('.bar').forEach(b => b.classList.remove('active'));
+            const pulse = document.getElementById('earthPulse');
+            pulse.style.transform = 'scale(1)';
+            pulse.style.background = 'radial-gradient(circle, #00ffcc, #0984e3)';
+            document.getElementById('displayBox').innerHTML = "Jukebox stopped. Press <strong>Play Jukebox</strong> to restart.";
+        }
+    </script>
+</body>
+</html>
