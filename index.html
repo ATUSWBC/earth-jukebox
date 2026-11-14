@@ -3,143 +3,413 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Earth Information Jukebox - NASA Space Apps</title>
+    <title>Earth Information Jukebox | NASA Space Apps</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0b0d17, #1b263b, #2c5364);
-            color: #ffffff;
+        :root {
+            --bg-dark: #050811;
+            --card-bg: rgba(16, 25, 45, 0.75);
+            --accent-cyan: #00f5d4;
+            --accent-blue: #00bbf9;
+            --accent-hot: #ff2a5f;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 20px;
-            text-align: center;
+            padding: 0;
         }
-        header {
-            margin-bottom: 15px;
-            padding: 15px;
-        }
-        h1 { color: #00ffcc; margin-bottom: 5px; }
-        p.subtitle { color: #b2bec3; font-size: 1.05em; }
-        .card {
-            background: rgba(255, 255, 255, 0.06);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            max-width: 650px;
-            margin: 15px auto;
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        }
-        /* Visual Earth Pulse Indicator */
-        .earth-visual {
-            width: 90px;
-            height: 90px;
-            margin: 15px auto;
-            border-radius: 50%;
-            background: radial-gradient(circle, #00ffcc, #0984e3);
-            box-shadow: 0 0 20px #00ffcc;
-            transition: all 0.5s ease;
-        }
-        /* Animated Bar Chart Container */
-        .chart-container {
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-around;
-            height: 140px;
-            margin: 25px 0 15px;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.25);
-            border-radius: 10px;
-        }
-        .bar-wrapper {
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at top, #0f1c3f 0%, var(--bg-dark) 75%);
+            color: var(--text-main);
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 8%;
+            padding: 20px;
+            overflow-x: hidden;
         }
+
+        /* Subtle Starfield Effect */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            max-width: 750px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(0, 245, 212, 0.12);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(0, 245, 212, 0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        h1 {
+            font-size: 2.1rem;
+            background: linear-gradient(90deg, #ffffff, var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .dashboard {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            width: 100%;
+            max-width: 820px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Top Telemetry Row */
+        .telemetry-grid {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 20px;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 18px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            margin-bottom: 20px;
+        }
+
+        .earth-orb-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .earth-orb {
+            width: 85px;
+            height: 85px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, var(--accent-cyan), #0077b6, #03045e);
+            box-shadow: 0 0 25px rgba(0, 245, 212, 0.5);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .stats-panel {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            text-align: left;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px;
+            border-radius: 10px;
+            border-left: 3px solid var(--accent-cyan);
+        }
+
+        .stat-label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .stat-value {
+            font-size: 1.45rem;
+            font-weight: 700;
+            margin-top: 4px;
+            color: #fff;
+        }
+
+        /* Live Audio Waveform Visualizer */
+        .visualizer-box {
+            position: relative;
+            width: 100%;
+            height: 75px;
+            background: rgba(0, 0, 0, 0.45);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 245, 212, 0.15);
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .visualizer-tag {
+            position: absolute;
+            top: 6px;
+            right: 10px;
+            font-size: 0.68rem;
+            color: var(--accent-cyan);
+            opacity: 0.7;
+        }
+
+        /* Interactive Bar Chart */
+        .chart-hint {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-align: left;
+        }
+
+        .chart-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px 12px 8px;
+            border-radius: 12px;
+            margin-bottom: 22px;
+            gap: 6px;
+        }
+
+        .bar-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+            cursor: pointer;
+        }
+
         .bar {
             width: 100%;
-            background-color: #45a29e;
-            border-radius: 4px 4px 0 0;
-            transition: all 0.4s ease;
+            max-width: 34px;
+            background: linear-gradient(180deg, var(--accent-blue), #1e3a8a);
+            border-radius: 5px 5px 0 0;
+            transition: all 0.3s ease;
         }
+
+        .bar-wrapper:hover .bar {
+            filter: brightness(1.3);
+            transform: scaleY(1.04);
+        }
+
         .bar.active {
-            background-color: #ff4c4c;
-            box-shadow: 0 0 12px #ff4c4c;
+            background: linear-gradient(180deg, #ff758f, var(--accent-hot));
+            box-shadow: 0 0 18px rgba(255, 42, 95, 0.8);
         }
+
         .bar-label {
-            font-size: 0.7em;
+            font-size: 0.72rem;
+            color: var(--text-muted);
             margin-top: 6px;
-            color: #c5c6c7;
+            font-weight: 500;
         }
-        .data-display {
-            font-size: 1.25em;
-            margin: 15px 0;
-            color: #dfe6e9;
-            min-height: 75px;
+
+        /* Controls Bar */
+        .controls-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
-        .highlight { color: #00ffcc; font-weight: bold; }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
         button {
-            background-color: #00ffcc;
-            color: #0f2027;
-            padding: 12px 26px;
-            font-size: 16px;
-            font-weight: bold;
+            padding: 11px 22px;
             border: none;
-            border-radius: 25px;
+            border-radius: 30px;
+            font-size: 0.92rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: 0.3s;
-            margin: 8px;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        button:hover { background-color: #00b894; color: #fff; }
-        button.stop-btn { background-color: #d63031; color: white; }
-        button.stop-btn:hover { background-color: #b71c1c; }
+
+        .btn-play {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            color: #04101c;
+            box-shadow: 0 4px 15px rgba(0, 245, 212, 0.35);
+        }
+
+        .btn-play:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 245, 212, 0.55);
+        }
+
+        .btn-stop {
+            background: rgba(255, 42, 95, 0.15);
+            color: #ff758f;
+            border: 1px solid rgba(255, 42, 95, 0.4);
+        }
+
+        .btn-stop:hover {
+            background: var(--accent-hot);
+            color: white;
+        }
+
+        .settings-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        select {
+            background: rgba(15, 23, 42, 0.9);
+            color: var(--text-main);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 7px 12px;
+            border-radius: 8px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .status-text {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: var(--accent-cyan);
+            min-height: 20px;
+        }
+
+        @media (max-width: 650px) {
+            .telemetry-grid { grid-template-columns: 1fr; text-align: center; }
+            .stats-panel { grid-template-columns: 1fr; text-align: center; }
+            .controls-bar { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
 
     <header>
+        <div class="badge">NASA Space Apps Challenge • Sonification Lab</div>
         <h1>🌍 Earth Information Jukebox</h1>
-        <p class="subtitle">Multi-Sensory NASA Climate Visualization & Real-Time Sonification</p>
+        <p class="subtitle">Interactive Climate Anomaly Sonification & Multi-Sensory Telemetry (1980–2026)</p>
     </header>
 
-    <div class="card">
-        <p>Experience Earth's rising global temperature anomalies through synchronized visuals and real-time audio frequencies up to 2026.</p>
-        
-        <!-- Dynamic Earth Pulse -->
-        <div class="earth-visual" id="earthPulse"></div>
+    <main class="dashboard">
+        <!-- Telemetry & Dynamic Earth Orb -->
+        <section class="telemetry-grid">
+            <div class="earth-orb-container">
+                <div class="earth-orb" id="earthOrb"></div>
+            </div>
+            <div class="stats-panel">
+                <div class="stat-box">
+                    <div class="stat-label">Observation Year</div>
+                    <div class="stat-value" id="statYear">--</div>
+                </div>
+                <div class="stat-box" style="border-color: var(--accent-hot);">
+                    <div class="stat-label">Temp Anomaly</div>
+                    <div class="stat-value" id="statTemp">-- °C</div>
+                </div>
+                <div class="stat-box" style="border-color: var(--accent-blue);">
+                    <div class="stat-label">Audio Pitch</div>
+                    <div class="stat-value" id="statFreq">-- Hz</div>
+                </div>
+            </div>
+        </section>
 
-        <!-- Visual Bar Chart -->
-        <div class="chart-container" id="chartContainer"></div>
-
-        <!-- Live Data Readout -->
-        <div class="data-display" id="displayBox">
-            Press <strong>"Play Jukebox"</strong> to hear and see Earth's climate data.
+        <!-- Real-Time Oscilloscope Audio Visualizer -->
+        <div class="visualizer-box">
+            <span class="visualizer-tag">LIVE AUDIO WAVEFORM</span>
+            <canvas id="waveCanvas"></canvas>
         </div>
 
-        <button onclick="startJukebox()">▶ Play Jukebox</button>
-        <button class="stop-btn" onclick="stopJukebox()">⏹ Stop</button>
-    </div>
+        <!-- Interactive Climate Timeline Chart -->
+        <div class="chart-hint">💡 Tip: Press <strong>Play</strong> for full timeline, or <strong>click any year bar</strong> to inspect & hear that year!</div>
+        <div class="chart-container" id="chartContainer"></div>
+
+        <!-- Controls -->
+        <div class="controls-bar">
+            <div class="btn-group">
+                <button class="btn-play" onclick="startSequence()">▶ Play Timeline</button>
+                <button class="btn-stop" onclick="stopSequence()">⏹ Stop</button>
+            </div>
+
+            <div class="settings-group">
+                <label>Tone Wave:
+                    <select id="waveSelect">
+                        <option value="triangle" selected>Warm Synth (Triangle)</option>
+                        <option value="sine">Pure Tone (Sine)</option>
+                        <option value="sawtooth">Rich Brass (Sawtooth)</option>
+                    </select>
+                </label>
+
+                <label>Tempo:
+                    <select id="speedSelect">
+                        <option value="1400">Normal</option>
+                        <option value="850">Fast</option>
+                        <option value="2000">Slow Study</option>
+                    </select>
+                </label>
+            </div>
+        </div>
+
+        <div class="status-text" id="statusMsg">Ready to translate NASA GISS climate records into sound.</div>
+    </main>
 
     <script>
-        // Updated NASA GISS Surface Temperature Anomaly Data (1980 - 2026)
-        const earthData = [
-            { year: 1980, anomaly: 0.26, note: 220, height: 25 },
-            { year: 1986, anomaly: 0.32, note: 250, height: 32 },
-            { year: 1992, anomaly: 0.41, note: 290, height: 42 },
-            { year: 1998, anomaly: 0.61, note: 340, height: 60 },
-            { year: 2004, anomaly: 0.54, note: 320, height: 55 },
-            { year: 2010, anomaly: 0.72, note: 400, height: 72 },
-            { year: 2016, anomaly: 1.01, note: 490, height: 95 },
-            { year: 2020, anomaly: 1.02, note: 510, height: 98 },
-            { year: 2023, anomaly: 1.18, note: 580, height: 110 },
-            { year: 2026, anomaly: 1.30, note: 650, height: 130 }
+        // NASA GISS Global Surface Temperature Anomaly Dataset (1980 - 2026)
+        const climateData = [
+            { year: 1980, anomaly: 0.26, freq: 220, height: 22, desc: "Baseline warming phase begins" },
+            { year: 1985, anomaly: 0.12, freq: 196, height: 15, desc: "Temporary cooling dip" },
+            { year: 1990, anomaly: 0.45, freq: 261, height: 35, desc: "Noticeable upward shift" },
+            { year: 1995, anomaly: 0.45, freq: 277, height: 36, desc: "Sustained warming trend" },
+            { year: 1998, anomaly: 0.61, freq: 329, height: 50, desc: "Strong El Niño spike" },
+            { year: 2005, anomaly: 0.68, freq: 349, height: 58, desc: "Mid-2000s heat acceleration" },
+            { year: 2010, anomaly: 0.72, freq: 392, height: 64, desc: "Record decade warmth" },
+            { year: 2016, anomaly: 1.01, freq: 466, height: 85, desc: "Crosses +1.0°C threshold" },
+            { year: 2020, anomaly: 1.02, freq: 493, height: 88, desc: "Tied warmest year on record" },
+            { year: 2023, anomaly: 1.18, freq: 554, height: 102, desc: "Unprecedented global heat surge" },
+            { year: 2026, anomaly: 1.30, freq: 659, height: 118, desc: "Critical climate anomaly peak" }
         ];
 
-        // Build Visual Bars on Load
         const chartContainer = document.getElementById('chartContainer');
-        earthData.forEach((item, index) => {
+        let audioCtx = null;
+        let analyser = null;
+        let isPlaying = false;
+        let currentIndex = 0;
+        let sequenceTimer = null;
+
+        // Build Interactive Bars
+        climateData.forEach((item, index) => {
             const wrapper = document.createElement('div');
             wrapper.className = 'bar-wrapper';
+            wrapper.title = `${item.year}: +${item.anomaly}°C (${item.freq} Hz)`;
+            wrapper.onclick = () => {
+                stopSequence();
+                triggerDataPoint(index, 1.1);
+            };
             wrapper.innerHTML = `
                 <div class="bar" id="bar-${index}" style="height: ${item.height}px;"></div>
                 <span class="bar-label">${item.year}</span>
@@ -147,83 +417,139 @@
             chartContainer.appendChild(wrapper);
         });
 
-        let audioCtx = null;
-        let isPlaying = false;
-        let currentIndex = 0;
-        let timer = null;
+        // Setup Web Audio & Live Canvas Visualizer
+        const canvas = document.getElementById('waveCanvas');
+        const ctx = canvas.getContext('2d');
 
-        function playTone(frequency, duration) {
+        function initAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 256;
+                analyser.connect(audioCtx.destination);
+                drawWaveform();
             }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSonification(freq, duration) {
+            initAudio();
             const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
+            const gain = audioCtx.createGain();
+            const waveType = document.getElementById('waveSelect').value;
 
-            osc.type = 'triangle'; 
-            osc.frequency.value = frequency;
+            osc.type = waveType;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
 
-            gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
 
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
+            osc.connect(gain);
+            gain.connect(analyser);
 
             osc.start();
             osc.stop(audioCtx.currentTime + duration);
         }
 
-        function updateVisuals(index, item) {
+        function triggerDataPoint(index, duration = 1.2) {
+            const item = climateData[index];
+
+            // Update Telemetry Numbers
+            document.getElementById('statYear').innerText = item.year;
+            document.getElementById('statTemp').innerText = `+${item.anomaly.toFixed(2)}°C`;
+            document.getElementById('statFreq').innerText = `${item.freq} Hz`;
+            document.getElementById('statusMsg').innerText = `📡 ${item.year} Telemetry: ${item.desc}`;
+
+            // Highlight Bar
             document.querySelectorAll('.bar').forEach(b => b.classList.remove('active'));
             const activeBar = document.getElementById(`bar-${index}`);
             if (activeBar) activeBar.classList.add('active');
 
-            const pulse = document.getElementById('earthPulse');
-            const scale = 1 + (item.anomaly * 0.25);
-            pulse.style.transform = `scale(${scale})`;
-            if (item.anomaly > 0.8) {
-                pulse.style.background = 'radial-gradient(circle, #ff7675, #d63031)';
-                pulse.style.boxShadow = '0 0 25px #ff4c4c';
+            // Update Earth Orb Glow & Scale
+            const orb = document.getElementById('earthOrb');
+            const scale = 0.9 + (item.anomaly * 0.25);
+            orb.style.transform = `scale(${scale})`;
+
+            if (item.anomaly >= 1.0) {
+                orb.style.background = 'radial-gradient(circle at 30% 30%, #ff758f, #ff2a5f, #590d22)';
+                orb.style.boxShadow = '0 0 35px rgba(255, 42, 95, 0.85)';
+            } else if (item.anomaly >= 0.5) {
+                orb.style.background = 'radial-gradient(circle at 30% 30%, #ffd166, #f77f00, #7f4f24)';
+                orb.style.boxShadow = '0 0 28px rgba(247, 127, 0, 0.65)';
             } else {
-                pulse.style.background = 'radial-gradient(circle, #00ffcc, #0984e3)';
-                pulse.style.boxShadow = '0 0 20px #00ffcc';
+                orb.style.background = 'radial-gradient(circle at 30% 30%, #00f5d4, #0077b6, #03045e)';
+                orb.style.boxShadow = '0 0 25px rgba(0, 245, 212, 0.55)';
             }
+
+            playSonification(item.freq, duration);
         }
 
-        function startJukebox() {
+        function startSequence() {
             if (isPlaying) return;
             isPlaying = true;
             currentIndex = 0;
 
-            const box = document.getElementById('displayBox');
+            const tempo = parseInt(document.getElementById('speedSelect').value);
 
-            const playStep = () => {
+            const step = () => {
                 if (!isPlaying) return;
-                if (currentIndex >= earthData.length) {
+                if (currentIndex >= climateData.length) {
                     currentIndex = 0;
                 }
-
-                const item = earthData[currentIndex];
-                box.innerHTML = `Year: <span class="highlight">${item.year}</span> | 
-                                 Temp Anomaly: <span class="highlight">+${item.anomaly}°C</span><br>
-                                 <small>Audio Sonification Frequency: <strong>${item.note} Hz</strong></small>`;
-
-                updateVisuals(currentIndex, item);
-                playTone(item.note, 1.2);
+                triggerDataPoint(currentIndex, (tempo / 1000) * 0.9);
                 currentIndex++;
             };
 
-            playStep();
-            timer = setInterval(playStep, 1500);
+            step();
+            sequenceTimer = setInterval(step, tempo);
         }
 
-        function stopJukebox() {
+        function stopSequence() {
             isPlaying = false;
-            clearInterval(timer);
+            clearInterval(sequenceTimer);
             document.querySelectorAll('.bar').forEach(b => b.classList.remove('active'));
-            const pulse = document.getElementById('earthPulse');
-            pulse.style.transform = 'scale(1)';
-            pulse.style.background = 'radial-gradient(circle, #00ffcc, #0984e3)';
-            document.getElementById('displayBox').innerHTML = "Jukebox stopped. Press <strong>Play Jukebox</strong> to restart.";
+            const orb = document.getElementById('earthOrb');
+            orb.style.transform = 'scale(1)';
+            orb.style.background = 'radial-gradient(circle at 30% 30%, #00f5d4, #0077b6, #03045e)';
+            orb.style.boxShadow = '0 0 25px rgba(0, 245, 212, 0.5)';
+            document.getElementById('statusMsg').innerText = "Playback paused. Click Play or select any bar.";
+        }
+
+        // Real-Time Waveform Renderer
+        function drawWaveform() {
+            requestAnimationFrame(drawWaveform);
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (!analyser) return;
+
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteTimeDomainData(dataArray);
+
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#00f5d4';
+            ctx.beginPath();
+
+            const sliceWidth = canvas.width / bufferLength;
+            let x = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = (v * canvas.height) / 2;
+
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+
+                x += sliceWidth;
+            }
+
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
         }
     </script>
 </body>
